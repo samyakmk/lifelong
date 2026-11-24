@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2efe6">
+  <meta name="description" content="Baseline Lab Demo is a fictional preventive lab testing experience.">
+  <title>{% block title %}Baseline Lab Demo{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('web.static', filename='baseline.css') }}">
+  <link rel="icon" href="{{ url_for('web.static', filename='favicon.png') }}" type="image/png">
+  {% block scripts %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="{{ url_for('web.landing') }}" aria-label="Baseline Lab Demo home">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>Baseline Lab <small>DEMO</small></span>
+      </a>
+      {% block navigation %}
+        <nav class="site-nav" aria-label="Primary">
+          <a href="{{ url_for('web.landing') }}#tests">Included tests</a>
+          <a href="{{ url_for('web.landing') }}#how">How it works</a>
+          <a href="{{ url_for('web.landing') }}#pricing">Pricing</a>
+        </nav>
+      {% endblock %}
+      <div class="header-actions">
+        {% block header_actions %}
+          {% if g.member %}
+            <a class="button button-small" href="{{ url_for('web.member') }}">My baseline</a>
+          {% else %}
+            <a class="header-sign-in" href="{{ url_for('web.member') }}">Sign in</a>
+            <a class="button button-small" href="{{ url_for('web.join') }}">Get started <span aria-hidden="true">↗</span></a>
+          {% endif %}
+        {% endblock %}
+      </div>
+    </div>
+  </header>
+  {% block main %}{% endblock %}
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div><strong>Baseline Lab Demo</strong><span>Fictional lab testing experience</span></div>
+      <nav aria-label="Footer">
+        <a href="{{ url_for('web.landing') }}#faq">FAQ</a>
+        <a href="{{ url_for('web.member') }}">Member access</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

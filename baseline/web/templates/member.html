@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}My baseline · Baseline Lab Demo{% endblock %}
+{% block navigation %}{% endblock %}
+{% block header_actions %}
+  <form method="post" action="{{ url_for('web.sign_out') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="button button-outline button-small" type="submit">Sign out</button>
+  </form>
+{% endblock %}
+{% block main %}
+<main id="main" class="wrap member-page">
+  <p class="eyebrow">MEMBER DASHBOARD</p>
+  <h1>Welcome, <em>{{ g.member.name.split()[0] }}.</em></h1>
+  {% if order %}
+    {% set active_index = (order_steps | list).index(order.status) %}
+    <div class="member-grid">
+      <section class="member-card member-next" aria-labelledby="member-next">
+        <p class="eyebrow"><span class="signal-dot"></span> {{ step.label }}</p>
+        <h2 id="member-next">{{ step.next_title }}</h2>
+        {% if order.status == 'awaiting_review' %}<p>Your demo order is confirmed.</p>{% endif %}
+        <p>{{ step.next_detail }}</p>
+      </section>
+      <section class="member-card member-receipt" aria-labelledby="receipt-title">
+        <h2 id="receipt-title">Order details</h2>
+        <dl>
+          <div><dt>Order</dt><dd>#{{ "%04d" | format(order.id) }}</dd></div>
+          <div><dt>Panel</dt><dd>{{ plan.name if order.kind == 'baseline' else 'Follow-up panel' }}</dd></div>
+          <div><dt>Draw partner</dt><dd>{{ order.draw_center }}</dd></div>
+          <div><dt>Purchase</dt><dd>{{ order.purchase_status | capitalize }} · ${{ "%g" | format(order.amount_cents / 100) }}</dd></div>
+        </dl>
+      </section>
+      <section class="member-card member-progress" aria-labelledby="order-progress">
+        <h2 id="order-progress">Order progress</h2>
+        <ol class="order-timeline">
+          {% for status, item in order_steps.items() %}
+            <li {% if status == order.status %}aria-current="step"{% endif %} {% if loop.index0 < active_index %}class="complete"{% endif %}>
+              <span class="timeline-dot" aria-hidden="true"></span>{{ item.label }}
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    </div>
+  {% else %}
+    <section class="member-card member-receipt"><h2>No orders yet</h2><p>Your lab orders will appear here.</p></section>
+  {% endif %}
+</main>
+{% endblock %}

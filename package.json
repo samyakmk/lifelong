@@ -1,0 +1,13 @@
+{
+  "name": "baseline-lab-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": ".venv/bin/python -m baseline",
+    "demo:fresh": ".venv/bin/python -m baseline --fresh",
+    "test": ".venv/bin/python -m unittest discover -s tests -v",
+    "build": "node scripts/build.mjs",
+    "build:web": "node scripts/build.mjs web",
+    "build:ios": "node scripts/build.mjs ios"
+  }
+}

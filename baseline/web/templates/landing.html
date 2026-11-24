@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block main %}
+<main id="main">
+  <section class="wrap hero" aria-labelledby="offer">
+    <div class="hero-copy">
+      <p class="eyebrow hero-label"><span class="signal-dot"></span> PREVENTIVE LAB TESTING</p>
+      <h1 id="offer">Meet your <em>baseline.</em></h1>
+      <p class="hero-description">Start with one blood draw and get a record of the markers you can track over time.</p>
+      <div class="hero-actions">
+        <a class="button button-lime" href="{{ url_for('web.join') }}">Get started <span aria-hidden="true">↗</span></a>
+        <a class="text-link text-link-light" href="#how">How it works <span aria-hidden="true">↓</span></a>
+      </div>
+      <p class="hero-price">{{ plan.price }} one time <span aria-hidden="true">·</span> Simulated purchase</p>
+    </div>
+    <div class="hero-visual">
+      <div class="sample-card">
+        <div class="sample-header">
+          <span class="eyebrow"><span class="signal-dot"></span> SAMPLE REPORT</span>
+          <span class="sample-label">ILLUSTRATIVE DATA</span>
+        </div>
+        <div class="sample-reading">
+          <p>LDL cholesterol</p>
+          <strong>104 <small>mg/dL</small></strong>
+        </div>
+        <div class="sample-chart" role="img" aria-label="Illustrative line chart showing LDL cholesterol declining across four draws to 104 milligrams per deciliter.">
+          <div class="plot-line line-one"></div>
+          <div class="plot-line line-two"></div>
+          <div class="plot-line line-three"></div>
+          <span class="plot-dot plot-one"></span>
+          <span class="plot-dot plot-two"></span>
+          <span class="plot-dot plot-three"></span>
+          <span class="plot-dot plot-four"></span>
+        </div>
+        <div class="sample-axis"><span>FIRST DRAW</span><span>LATEST DRAW</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap benefit-strip" aria-label="Plan at a glance">
+    <div><strong>5</strong><span>test categories</span></div>
+    <div><strong>1</strong><span>draw-center visit</span></div>
+    <div><strong>{{ plan.price }}</strong><span>one-time price</span></div>
+  </div>
+
+  <section id="tests" class="wrap section" aria-labelledby="tests-title">
+    <div class="section-heading">
+      <div><p class="eyebrow">WHAT WE TEST</p><h2 id="tests-title">Inside the <em>Baseline Panel.</em></h2></div>
+      <p>Five groups of common lab markers, collected at a single visit.</p>
+    </div>
+    <ul class="test-grid">
+      {% for icon, title, description in test_groups %}
+        <li class="test-card">
+          <span class="test-icon icon-{{ icon }}" aria-hidden="true"></span>
+          <h3>{{ title }}</h3>
+          <p>{{ description }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section id="how" class="draw-section" aria-labelledby="how-title">
+    <div class="wrap draw-grid">
+      <div class="draw-partner">
+        <p class="eyebrow"><span class="signal-dot"></span> DEMO DRAW PARTNER</p>
+        <div class="draw-art" aria-hidden="true"><div class="draw-vial"></div><div class="draw-vial draw-vial-short"></div></div>
+        <h3>{{ plan.draw_center }}</h3>
+        <p>One fictional location for your baseline blood draw.</p>
+      </div>
+      <div class="draw-copy">
+        <p class="eyebrow">HOW IT WORKS</p>
+        <h2 id="how-title">From signup <em>to sample.</em></h2>
+        <ol class="draw-steps">
+          <li><span class="step-number" aria-hidden="true">1</span><div><h3>Set up your account</h3><p>Answer three quick intake questions and place a simulated order.</p></div></li>
+          <li><span class="step-number" aria-hidden="true">2</span><div><h3>Get your order reviewed</h3><p>Review comes first. Once approved, the next step is booking your draw at {{ plan.draw_center }}.</p></div></li>
+          <li><span class="step-number" aria-hidden="true">3</span><div><h3>Visit the draw center</h3><p>The partner collects your sample. After processing and review, your report is published to your account.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="wrap section plan-section" aria-labelledby="pricing-title">
+    <div>
+      <p class="eyebrow">PRICING</p>
+      <h2 id="pricing-title">One panel.<br><em>One price.</em></h2>
+      <p>Your price covers the panel and the draw-center visit. The demo stops at order review.</p>
+    </div>
+    <div class="plan-card">
+      <h3>{{ plan.name }}</h3>
+      <p class="plan-price">{{ plan.price }} <small>one time</small></p>
+      <ul class="checklist">
+        <li>Five lab test categories</li>
+        <li>One visit at {{ plan.draw_center }}</li>
+        <li>A member account to track your order</li>
+      </ul>
+      <a class="button" href="{{ url_for('web.join') }}">Get started <span aria-hidden="true">↗</span></a>
+      <p class="fine-print">Simulated checkout. No payment details required.</p>
+    </div>
+  </section>
+
+  <section id="faq" class="wrap section faq-grid" aria-labelledby="faq-title">
+    <div><h2 id="faq-title">Common questions</h2></div>
+    <div class="faq-list">
+      <details><summary>Will I be charged?</summary><p>Checkout is simulated. Your demo purchase and order are saved locally.</p></details>
+      <details><summary>What details should I use?</summary><p>Use a made-up name, an address ending in <code>example.test</code>, and a demo-only password. Choose answers for a fictional member.</p></details>
+      <details><summary>Can I book a real lab visit?</summary><p>{{ plan.draw_center }} is a fictional partner. Your dashboard shows the demo order in review. Booking and report views come in later phases.</p></details>
+      <details><summary>Is the price recurring?</summary><p>{{ plan.price }} is a one-time demo price for the Baseline Panel.</p></details>
+    </div>
+  </section>
+</main>
+{% endblock %}

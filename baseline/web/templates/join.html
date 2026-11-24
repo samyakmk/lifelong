@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Get started · Baseline Lab Demo{% endblock %}
+{% block navigation %}{% endblock %}
+{% block header_actions %}<a class="header-sign-in" href="{{ url_for('web.member') }}">Sign in</a>{% endblock %}
+{% block scripts %}<script src="{{ url_for('web.static', filename='join.js') }}" defer></script>{% endblock %}
+{% macro field_error(name) %}
+  {% if name in errors %}<p class="field-error" id="error-{{ name }}">{{ errors[name] }}</p>{% endif %}
+{% endmacro %}
+{% macro error_state(name) %}
+  {% if name in errors %}aria-invalid="true" aria-describedby="error-{{ name }}"{% endif %}
+{% endmacro %}
+{% block main %}
+<main id="main" class="wrap onboarding">
+  <div class="onboarding-main">
+    <a class="text-link back-link" href="{{ url_for('web.landing') }}"><span aria-hidden="true">←</span> Back to overview</a>
+    <h1>Get started</h1>
+    <ol class="progress-strip" aria-label="Signup progress" hidden>
+      <li>Account</li><li>Intake</li><li>Checkout</li>
+    </ol>
+    {% if errors %}
+      <p class="form-notice" role="alert">Review the highlighted fields and re-enter your password to finish signup.</p>
+    {% endif %}
+    <form class="form-card" method="post" autocomplete="on" data-join-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="checkout_key" value="{{ checkout_key }}">
+      <section class="join-step" data-join-step aria-labelledby="account-heading">
+        <h2 id="account-heading" tabindex="-1">Create your account</h2>
+        <p class="section-intro">Use fictional details for this demo.</p>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="avery@example.test" value="{{ values.get('email', '') }}" maxlength="254" required {{ error_state('email') }}>
+        {{ field_error('email') }}
+        <label for="name">Full name</label>
+        <input id="name" name="name" autocomplete="name" placeholder="Avery Quinn" value="{{ values.get('name', '') }}" maxlength="100" required {{ error_state('name') }}>
+        {{ field_error('name') }}
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" required {% if 'password' in errors %}{{ error_state('password') }}{% else %}aria-describedby="password-hint"{% endif %}>
+        <p id="password-hint" class="fine-print">At least 10 characters. Choose a demo-only password.</p>
+        {{ field_error('password') }}
+      </section>
+      <section class="join-step" data-join-step aria-labelledby="intake-heading">
+        <h2 id="intake-heading" tabindex="-1">Tell us a little about yourself</h2>
+        <p class="section-intro">Answer as your fictional member. Your answers are saved with the order.</p>
+        {% for key, (question, choices) in intake_questions.items() %}
+          <fieldset {% if key in errors %}aria-describedby="error-{{ key }}"{% endif %}>
+            <legend>{{ question }}</legend>
+            <div class="choice-list">
+              {% for option, label in choices.items() %}
+                <label class="choice">
+                  <input type="radio" name="{{ key }}" value="{{ option }}" required {% if values.get(key) == option %}checked{% endif %} {{ error_state(key) }}>
+                  <span>{{ label }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            {{ field_error(key) }}
+          </fieldset>
+        {% endfor %}
+      </section>
+      <section class="join-step" data-join-step aria-labelledby="checkout-heading">
+        <h2 id="checkout-heading" tabindex="-1">Simulated checkout</h2>
+        <p class="section-intro">Place a demo order to see what happens next. No money changes hands.</p>
+        <div class="checkout-summary">
+          <div><strong>{{ plan.name }}</strong><small>One blood draw at {{ plan.draw_center }}</small></div>
+          <strong>{{ plan.price }}</strong>
+        </div>
+        <label class="consent-choice">
+          <input type="checkbox" name="consent" value="yes" required {% if values.get('consent') == 'yes' %}checked{% endif %} {{ error_state('consent') }}>
+          <span>{{ consent_text }}</span>
+        </label>
+        {{ field_error('consent') }}
+      </section>
+      <div class="form-actions">
+        <button type="button" data-previous class="button button-outline" hidden>Back</button>
+        <button type="button" data-next class="button" hidden>Continue <span aria-hidden="true">→</span></button>
+        <button type="submit" data-finish class="button">Place demo order <span aria-hidden="true">→</span></button>
+      </div>
+    </form>
+    <p class="onboarding-footnote">Already have an account? <a href="{{ url_for('web.member') }}">Sign in</a></p>
+  </div>
+  <aside class="onboarding-aside" aria-label="Plan summary">
+    <p class="eyebrow"><span class="signal-dot"></span> YOUR PLAN</p>
+    <h2>{{ plan.name }}</h2>
+    <p class="aside-price">{{ plan.price }} <small>one time</small></p>
+    <ul class="checklist">
+      <li>Five lab test categories</li>
+      <li>One draw at {{ plan.draw_center }}</li>
+      <li>Order status in your member account</li>
+    </ul>
+    <p class="aside-note">Simulated checkout · {{ plan.draw_center }} is fictional</p>
+  </aside>
+</main>
+{% endblock %}
