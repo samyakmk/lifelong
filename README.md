@@ -1,34 +1,49 @@
 # Baseline Lab Demo
 
-Phase 1 of a local interview MVP for preventive lab testing. The public site offers one fictional **Baseline Panel** for **$149 one time** at **Alder Draw Center**, a fictional draw partner. Use synthetic account and intake details.
+A local interview MVP for preventive lab testing. The public site offers one fictional **Baseline Panel** for **$149 one time** at **Alder Draw Center**, a fictional draw partner. Phase 2 adds staff fulfillment and the shared member API. Use synthetic account and intake details.
 
 ## Setup and run
 
-Run these commands from this repository’s root. This project uses Python 3.12 and Node.js with npm. Flask is the only direct Python dependency. npm runs commands without installing frontend dependencies.
+Run from the repository root with Python 3.12 and Node.js with npm. Flask is the only direct Python dependency.
 
 ```sh
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+npm run demo:seed
 npm start
 ```
 
-Open [http://127.0.0.1:5050](http://127.0.0.1:5050). The server binds to loopback. Visit **Get started**, finish the three steps, and confirm the dashboard shows **Awaiting review**. To sign back in, use the credentials you just created at [/member](http://127.0.0.1:5050/member). To switch ports, run `npm start -- --port 5051`.
+Open the [public site](http://127.0.0.1:5050/), [member sign-in](http://127.0.0.1:5050/member), or [staff queue](http://127.0.0.1:5050/staff). The server binds to loopback. Use `npm start -- --port 5052` for a second local server. The app uses `instance/baseline.sqlite3` by default. The database and browser session signing key persist across restarts.
 
-The server initializes `instance/baseline.sqlite3` and stores the local session signing key beside it. Both persist across restarts. The app needs no external services or environment file.
+| Demo account | Email | Password |
+| --- | --- | --- |
+| Staff | `staff@example.test` | `BaselineStaffDemo-27!` |
+| Prepared member, Casey Harper | `casey.harper@example.test` | `BaselineCaseyDemo-27!` |
 
-## Fresh demo database
+The staff account and upcoming weekday slots are created on startup. Restarting the server or running the seed refreshes the upcoming slots and preserves existing bookings. The separate seed command prepares Casey’s two published draws on April 10 and October 16, 2025. Rerunning the seed preserves the same two orders, appointments, and reports. A new public signup always has its own baseline order at **Awaiting review**.
 
-Stop the running server with Ctrl+C, then run:
+## Fresh rehearsal database
+
+Use a separate instance to rehearse signup and fulfillment again.
 
 ```sh
-npm run demo:fresh
+mkdir -p instance
+export BASELINE_INSTANCE_DIR="$(mktemp -d "$PWD/instance/demo-XXXXXX")"
+npm run demo:seed
+npm start
 ```
 
-This starts the same site on port 5050 with a new, empty database under `instance/demo-*/`. Previous data stays in its original directory. The server prints the database path at startup. To reopen a particular demo later, replace the sample directory below with the one printed by the server:
+The server prints the database path. To reopen that rehearsal, set `BASELINE_INSTANCE_DIR` to the directory containing the database before running `npm start`. `npm run demo:fresh` starts a separate empty instance for a signup-only run.
 
-```sh
-BASELINE_INSTANCE_DIR=instance/demo-REPLACE_ME npm start
-```
+## Verify the staff and member handoff
+
+1. Sign up through the public site with a new fictional email and password. Open staff and verify the new member appears with **Approve order** as the next action.
+2. Open the case and approve the order. Sign in to the API with the new member’s credentials, list slots, and book one. Reload the staff case and member dashboard to see the same appointment.
+3. In staff, choose **Mark collected** and **Import sample results**. Confirm that staff can open the draft and that the member’s report list, trends, and insights are empty. The member’s chat should say results are pending publication.
+4. Choose **Publish results** and verify the member can fetch the report. Casey’s API account should still show just its own two reports.
+5. Open Casey’s staff case for the interview. Ask the member API “What changed in my LDL cholesterol since my first test?” The sourced answer is a decrease of 38 mg/dL, from 142 on April 10 to 104 on October 16, 2025.
+
+[API reference and copyable booking and chat commands](docs/member-api.md)
 
 ## Checks and exports
 
@@ -37,17 +52,13 @@ npm test
 npm run build
 ```
 
-The default build packages the runnable Flask project in `dist/baseline-web.zip`, with the same setup instructions and without local database files, the virtual environment, or environment files. `npm run build:web` selects the same target.
-
-`npm run build:ios` and `npm run build -- ios` reserve the iOS target. Phase 3 will add the native Expo client in `mobile/`. The root command delegates to the mobile package’s `export:ios` script once that client exists.
+The tests cover signup, the staff-to-member handoff, retry and slot contention, publication and ownership, token expiry and revocation, and trend and chat evidence. The default website build packages the runnable project and synthetic fixtures in `dist/baseline-web.zip`. `npm run build:web` selects the same target. `npm run build:ios` and `npm run build -- ios` delegate to `mobile/package.json` once Phase 3 adds the Expo client.
 
 ## Schema and fulfillment handoff
 
-- `members` stores the normalized email and Werkzeug password hash. `intakes` captures the three demo answers, and `consents` records the version, accepted text, and timestamp.
-- `purchases` stores the plan and simulated amount. A unique checkout key makes a retried signup idempotent. The baseline order, purchase, member, intake, and consent commit together.
-- `orders` belongs to a member, a purchase owned by that member, and a draw center. Each member can have one baseline and multiple follow-up orders. `appointments` and `reports` each attach to one order. Store the collection timestamp on the order and use the report’s publication timestamp to gate report access. A member can accrue multiple published reports on different orders.
-- The order starts at `awaiting_review` and progresses through `approved` → `booked` → `collected` → `results_imported` → `published`. SQLite checks the status values and rejects out-of-sequence updates. Later workflow services should update orders and related appointment or report records in the same transaction.
-- `baseline/accounts.py` owns account creation and password verification. `baseline/orders.py` reads order state for an authenticated member ID. Flask routes, templates, and browser assets live under `baseline/web/`. Phase 2 can call the same account and order logic from a JSON API with its own mobile token sessions. Phase 3 can use that API and the same stored credentials.
-- The browser uses an HTTP-only, same-site signed session cookie and server-checked CSRF tokens for POSTs. The dashboard takes its member ID from the session. This local phase ends at order review.
+- `members`, `intakes`, `consents`, `purchases`, and the baseline order are written together during signup. Each member can have one baseline and multiple follow-up orders. Separate `staff_users` records authorize staff browser sessions, and `member_tokens` stores hashes of expiring, revocable API bearer tokens.
+- `orders` follow `awaiting_review` → `approved` → `booked` → `collected` → `results_imported` → `published`. SQLite rejects skipped or reversed status updates. The fulfillment service writes the appointment, collection timestamp, report draft, or publication timestamp in the same transaction as its corresponding status change.
+- `draw_slots` is the draw center’s availability. `appointments` reserves one slot per order and one order per slot. `reports` holds one report per order and `report_measurements` holds normalized values and reference ranges. Startup migrates phase 1 databases in place, preserving prior records.
+- `baseline/orders.py` and `baseline/fulfillment.py` provide the shared order and booking logic. `baseline/results.py` is the member-scoped source for published reports, trends, insights, and local guided chat. `baseline/api.py` exposes those services under `/api/v1`. The Jinja dashboard and API use the same member dashboard logic.
 
 [Funnel research and design decisions](docs/signup-research.md)

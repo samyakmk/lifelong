@@ -15,6 +15,9 @@ class Plan:
 
 
 PLAN = Plan()
+DRAW_ADDRESS = "184 Alder Way, Oakland, CA (demo)"
+DRAW_TIMEZONE = "America/Los_Angeles"
+DRAW_PREP = "Bring your appointment confirmation and follow the draw center’s visit instructions."
 CONSENT_VERSION = "demo-v1"
 CONSENT_TEXT = (
     "I agree to store the fictional details I enter in this local demo "

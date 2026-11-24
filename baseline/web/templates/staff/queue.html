@@ -1,0 +1,51 @@
+{% extends "staff/base.html" %}
+{% block title %}Fulfillment queue · Baseline Lab Demo{% endblock %}
+{% block main %}
+<main id="main" class="wrap staff-page">
+  <div class="staff-hero">
+    <div>
+      <p class="eyebrow"><span class="signal-dot"></span> STAFF WORKSPACE</p>
+      <h1>Fulfillment <em>queue.</em></h1>
+      <p>Review signups and see what each order needs next.</p>
+    </div>
+    <dl class="queue-counts">
+      <div><dt>Awaiting review</dt><dd>{{ queue | selectattr('status', 'equalto', 'awaiting_review') | list | length }}</dd></div>
+      <div><dt>In fulfillment</dt><dd>{{ queue | selectattr('status', 'in', ['approved', 'booked', 'collected', 'results_imported']) | list | length }}</dd></div>
+      <div><dt>Published</dt><dd>{{ queue | selectattr('status', 'equalto', 'published') | list | length }}</dd></div>
+    </dl>
+  </div>
+
+  {% if queue %}
+    <section class="queue-board" aria-label="Member orders">
+      <div class="queue-labels" aria-hidden="true"><span>Member</span><span>Latest order</span><span>Next action</span></div>
+      <ul class="queue-list">
+        {% for row in queue %}
+          <li class="queue-row">
+            <div class="queue-person"><span class="queue-initial" aria-hidden="true">{{ row.name[0] | upper }}</span>
+              <div><strong>{{ row.name }}</strong><small>{{ row.email }}</small></div>
+            </div>
+            <div class="queue-state">
+              {% if row.order_id %}
+                <span class="status-pill status-{{ row.status }}">{{ steps[row.status].label }}</span>
+                <small>#{{ "%04d" | format(row.order_id) }} · {{ "Baseline" if row.kind == "baseline" else "Follow-up" }}</small>
+              {% else %}
+                <span class="status-pill">No order</span>
+              {% endif %}
+            </div>
+            <div class="queue-next">
+              <div><strong>{{ next_actions.get(row.status, "Review member") }}</strong>
+                {% if row.published_draws %}<small>{{ row.published_draws }} published {{ "draw" if row.published_draws == 1 else "draws" }}</small>{% endif %}
+              </div>
+              <a class="text-link" href="{{ url_for('staff.case', member_id=row.id) }}" aria-label="Open case for {{ row.name }}">Open case <span aria-hidden="true">↗</span></a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% else %}
+    <section class="member-card queue-empty">
+      <h2>No members yet</h2><p>New signups appear here as soon as a demo order is placed.</p>
+    </section>
+  {% endif %}
+</main>
+{% endblock %}

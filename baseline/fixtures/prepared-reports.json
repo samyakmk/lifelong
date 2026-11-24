@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "collection_date": "2025-04-10",
+    "summary": "Sample clinician summary: LDL cholesterol was above this lab’s example reference limit at the first draw. Glucose and hemoglobin A1c were within their listed ranges.",
+    "values": {"total_cholesterol":213,"ldl":142,"hdl":50,"triglycerides":105,"glucose":91,"hemoglobin_a1c":5.3,"alt":26,"creatinine":0.87,"ferritin":63,"tsh":2.0}
+  },
+  "follow_up": {
+    "collection_date": "2025-10-16",
+    "summary": "Sample clinician summary: LDL cholesterol was lower at the follow-up draw and within this lab’s example reference range. HDL cholesterol increased. Hemoglobin A1c was stable at 5.3%.",
+    "values": {"total_cholesterol":182,"ldl":104,"hdl":57,"triglycerides":104,"glucose":90,"hemoglobin_a1c":5.3,"alt":21,"creatinine":0.87,"ferritin":65,"tsh":2.0}
+  }
+}

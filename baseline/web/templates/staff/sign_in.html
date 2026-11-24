@@ -1,0 +1,18 @@
+{% extends "staff/base.html" %}
+{% block title %}Staff sign-in · Baseline Lab Demo{% endblock %}
+{% block main %}
+<main id="main" class="wrap narrow">
+  <p class="eyebrow">DEMO STAFF WORKSPACE</p>
+  <h1>Staff sign-in</h1>
+  <p class="section-intro">Review new orders and track each draw through publication.</p>
+  <form method="post" class="form-card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if error %}<p class="form-notice" role="alert">{{ error }}</p>{% endif %}
+    <label for="staff-email">Staff email</label>
+    <input id="staff-email" name="email" type="email" autocomplete="username" value="{{ email }}" maxlength="254" required>
+    <label for="staff-password">Staff password</label>
+    <input id="staff-password" name="password" type="password" autocomplete="current-password" maxlength="128" required>
+    <div class="form-actions"><button class="button" type="submit">Sign in <span aria-hidden="true">→</span></button></div>
+  </form>
+</main>
+{% endblock %}

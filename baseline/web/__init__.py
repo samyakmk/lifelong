@@ -7,30 +7,17 @@ from flask import (
 from ..accounts import EmailInUse, authenticate_member, create_member, validate_signup
 from ..catalog import CONSENT_TEXT, INTAKE_QUESTIONS, PLAN, TEST_GROUPS
 from ..db import get_db
-from ..orders import ORDER_STEPS, latest_member_order
+from ..orders import ORDER_STEPS, member_dashboard
+from .security import change_identity, csrf_token, matches_session, valid_form
 
 web = Blueprint(
     "web", __name__, template_folder="templates", static_folder="static", static_url_path="/assets"
 )
 
 
-def csrf_token():
-    if "csrf_token" not in session:
-        session["csrf_token"] = secrets.token_urlsafe(32)
-    return session["csrf_token"]
-
-
-def matches_session(key, submitted):
-    expected = session.get(key)
-    return bool(
-        expected and submitted and submitted.isascii()
-        and secrets.compare_digest(expected, submitted)
-    )
-
-
 @web.before_request
 def prepare_request():
-    if request.method == "POST" and not matches_session("csrf_token", request.form.get("csrf_token")):
+    if not valid_form():
         return render_template(
             "error.html", title="This form has expired",
             message="Open a fresh page to continue.",
@@ -40,12 +27,12 @@ def prepare_request():
             "SELECT id, name FROM members WHERE id = ?", (session["member_id"],)
         ).fetchone()
         if g.member is None:
-            session.clear()
+            change_identity("member_id")
     else:
         g.member = None
 
 
-@web.after_request
+@web.after_app_request
 def set_headers(response):
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; object-src 'none'; base-uri 'none'; "
@@ -53,20 +40,18 @@ def set_headers(response):
     )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
-    if request.endpoint in {"web.join", "web.member", "web.sign_out"}:
+    if request.blueprint in {"staff", "api"} or request.endpoint in {"web.join", "web.member", "web.sign_out"}:
         response.headers["Cache-Control"] = "no-store"
     return response
 
 
-@web.context_processor
+@web.app_context_processor
 def template_values():
     return {"plan": PLAN, "csrf_token": csrf_token}
 
 
 def sign_in(member_id):
-    session.clear()
-    session.permanent = True
-    session["member_id"] = member_id
+    change_identity("member_id", member_id)
 
 
 @web.get("/")
@@ -118,9 +103,8 @@ def member():
     if g.member is not None:
         if request.method == "POST":
             return redirect(url_for("web.member"), code=303)
-        order = latest_member_order(get_db(), g.member["id"])
-        step = ORDER_STEPS[order["status"]] if order else None
-        return render_template("member.html", order=order, step=step, order_steps=ORDER_STEPS)
+        dashboard = member_dashboard(get_db(), g.member)
+        return render_template("member.html", **dashboard, order_steps=ORDER_STEPS)
 
     email = ""
     error = None
@@ -137,5 +121,5 @@ def member():
 
 @web.post("/member/sign-out")
 def sign_out():
-    session.clear()
+    change_identity("member_id")
     return redirect(url_for("web.member"), code=303)

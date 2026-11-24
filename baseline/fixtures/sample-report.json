@@ -1,0 +1,15 @@
+{
+  "summary": "This synthetic panel includes lipid, glucose, liver, kidney, iron and thyroid markers. LDL cholesterol is above the example lab reference limit. The other reported values are within their listed ranges.",
+  "measurements": [
+    {"code":"total_cholesterol","name":"Total cholesterol","group":"Heart health","value":194,"unit":"mg/dL","reference_high":199},
+    {"code":"ldl","name":"LDL cholesterol","group":"Heart health","value":136,"unit":"mg/dL","reference_high":129},
+    {"code":"hdl","name":"HDL cholesterol","group":"Heart health","value":49,"unit":"mg/dL","reference_low":40},
+    {"code":"triglycerides","name":"Triglycerides","group":"Heart health","value":111,"unit":"mg/dL","reference_high":149},
+    {"code":"glucose","name":"Glucose","group":"Blood sugar","value":93,"unit":"mg/dL","reference_low":70,"reference_high":99},
+    {"code":"hemoglobin_a1c","name":"Hemoglobin A1c","group":"Blood sugar","value":5.4,"unit":"%","reference_low":4.0,"reference_high":5.6},
+    {"code":"alt","name":"ALT","group":"Liver & kidney","value":27,"unit":"U/L","reference_low":7,"reference_high":55},
+    {"code":"creatinine","name":"Creatinine","group":"Liver & kidney","value":0.90,"unit":"mg/dL","reference_low":0.60,"reference_high":1.20},
+    {"code":"ferritin","name":"Ferritin","group":"Blood & iron","value":56,"unit":"ng/mL","reference_low":20,"reference_high":250},
+    {"code":"tsh","name":"TSH","group":"Thyroid & nutrients","value":2.1,"unit":"mIU/L","reference_low":0.4,"reference_high":4.0}
+  ]
+}

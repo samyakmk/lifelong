@@ -1,0 +1,88 @@
+{% extends "staff/base.html" %}
+{% block title %}{{ member.name }} · Baseline Lab Demo staff{% endblock %}
+{% block main %}
+<main id="main" class="wrap staff-page">
+  <a class="text-link back-link" href="{{ url_for('staff.index') }}"><span aria-hidden="true">←</span> Back to queue</a>
+  <div class="case-heading">
+    <div><p class="eyebrow">MEMBER CASE</p><h1>{{ member.name }}</h1><p>{{ member.email }} · Joined {{ member.created_at | visit_time }}</p></div>
+    <span class="status-pill">{{ orders | length }} {{ "order" if orders | length == 1 else "orders" }}</span>
+  </div>
+  {% for message in get_flashed_messages() %}<p class="staff-notice" role="status">{{ message }}</p>{% endfor %}
+  {% if error %}<p class="form-notice" role="alert">{{ error }}</p>{% endif %}
+  <div class="case-grid">
+    <aside class="member-card case-intake">
+      <h2>Intake</h2>
+      {% if intake %}
+        <dl>
+        {% for key, (question, choices) in questions.items() %}
+          <div><dt>{{ question }}</dt><dd>{{ choices.get(intake[key], intake[key]) }}</dd></div>
+        {% endfor %}
+        </dl>
+        <p class="fine-print">Submitted {{ intake.submitted_at | visit_time }}</p>
+      {% else %}
+        <p>No intake on file.</p>
+      {% endif %}
+      <div class="case-consent">
+        <h3>Demo consent</h3>
+        {% for consent in consents %}
+          <p>{{ consent.version }} · {{ consent.accepted_at | visit_time }}</p>
+        {% else %}
+          <p>No consent on file.</p>
+        {% endfor %}
+      </div>
+    </aside>
+    <div class="case-orders">
+      <h2>Order history</h2>
+      {% for order in orders %}
+        {% set report = reports.get(order.id) %}
+        <section class="member-card case-order" id="order-{{ order.id }}" aria-labelledby="order-title-{{ order.id }}">
+          <div class="case-order-header">
+            <div><p class="eyebrow">ORDER #{{ "%04d" | format(order.id) }}</p>
+              <h3 id="order-title-{{ order.id }}">{{ plan.name if order.kind == "baseline" else "Follow-up panel" }}</h3>
+            </div>
+            <span class="status-pill status-{{ order.status }}">{{ steps[order.status].label }}</span>
+          </div>
+          <dl class="case-milestones">
+            <div><dt>Order placed</dt><dd>{{ order.created_at | visit_time }}</dd></div>
+            <div><dt>Approved</dt><dd>{{ order.approved_at | visit_time }}</dd></div>
+            <div><dt>Appointment</dt><dd>{% if order.starts_at %}{{ order.starts_at | visit_time }}<small>{{ order.draw_center }}</small>{% else %}Pending booking{% endif %}</dd></div>
+            <div><dt>Collected</dt><dd>{{ order.collected_at | visit_time }}</dd></div>
+          </dl>
+
+          {% if report %}
+            <div class="report-preview">
+              <div class="report-heading"><h4>Report #{{ report.id }}</h4>
+                {% if report.published_at %}<span class="status-pill status-published">Published</span>
+                {% else %}<span class="status-pill status-results_imported">Draft</span>{% endif %}
+              </div>
+              <p class="report-dates">Imported {{ report.imported_at | visit_time }}{% if report.published_at %}<span>Published {{ report.published_at | visit_time }}</span>{% endif %}</p>
+              <p>{{ report.summary }}</p>
+              <details {% if not report.published_at %}open{% endif %}>
+                <summary>{{ report.measurements | length }} measurements</summary>
+                <ul class="report-measurements">
+                  {% for measurement in report.measurements %}
+                    <li><div><strong>{{ measurement.name }}</strong><small>{{ measurement.group }}</small></div>
+                      <div><strong>{{ "%g" | format(measurement.value) }} {{ measurement.unit }}</strong><small>{{ reference_text(measurement) | capitalize }}</small></div></li>
+                  {% endfor %}
+                </ul>
+              </details>
+            </div>
+          {% endif %}
+
+          {% if order.status in actions %}
+            {% set action, label = actions[order.status] %}
+            <form class="case-action" method="post" action="{{ url_for('staff.apply_order_action', member_id=member.id, order_id=order.id, action=action) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="button" type="submit">{{ label }} <span aria-hidden="true">→</span></button>
+            </form>
+          {% elif order.status == "approved" %}
+            <p class="case-wait">{{ next_actions[order.status] }} at {{ order.draw_center }}.</p>
+          {% endif %}
+        </section>
+      {% else %}
+        <p>No lab orders yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</main>
+{% endblock %}

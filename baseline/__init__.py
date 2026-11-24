@@ -47,8 +47,14 @@ def create_app(instance_path=None):
     )
 
     from .web import web
+    from .web.staff import staff
+    from .api import api
+    from .schedule import visit_time
 
     app.register_blueprint(web)
+    app.register_blueprint(staff)
+    app.register_blueprint(api)
+    app.add_template_filter(visit_time, "visit_time")
     app.teardown_appcontext(db.close_db)
     with app.app_context():
         db.initialize()

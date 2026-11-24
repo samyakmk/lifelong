@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS orders (
         'awaiting_review', 'approved', 'booked', 'collected', 'results_imported', 'published'
     )),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    approved_at TEXT,
     collected_at TEXT,
     FOREIGN KEY (purchase_id, member_id) REFERENCES purchases(id, member_id)
 );
@@ -59,9 +60,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_baseline_per_member
     ON orders (member_id) WHERE kind = 'baseline';
 CREATE INDEX IF NOT EXISTS orders_by_member ON orders (member_id, id);
 
+CREATE TABLE IF NOT EXISTS draw_slots (
+    id INTEGER PRIMARY KEY,
+    draw_center_id INTEGER NOT NULL REFERENCES draw_centers(id),
+    starts_at TEXT NOT NULL,
+    UNIQUE (draw_center_id, starts_at)
+);
+
 CREATE TABLE IF NOT EXISTS appointments (
     id INTEGER PRIMARY KEY,
     order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id),
+    slot_id INTEGER REFERENCES draw_slots(id),
     starts_at TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -72,6 +81,32 @@ CREATE TABLE IF NOT EXISTS reports (
     summary TEXT NOT NULL DEFAULT '',
     imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     published_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS report_measurements (
+    report_id INTEGER NOT NULL REFERENCES reports(id),
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    group_name TEXT NOT NULL,
+    value REAL NOT NULL,
+    unit TEXT NOT NULL,
+    reference_low REAL,
+    reference_high REAL,
+    PRIMARY KEY (report_id, code),
+    CHECK (reference_high >= reference_low)
+);
+
+CREATE TABLE IF NOT EXISTS staff_users (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS member_tokens (
+    token_digest TEXT PRIMARY KEY,
+    member_id INTEGER NOT NULL REFERENCES members(id),
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT
 );
 
 CREATE TRIGGER IF NOT EXISTS enforce_order_progression

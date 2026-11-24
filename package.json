@@ -5,6 +5,7 @@
   "scripts": {
     "start": ".venv/bin/python -m baseline",
     "demo:fresh": ".venv/bin/python -m baseline --fresh",
+    "demo:seed": ".venv/bin/python -m baseline --seed",
     "test": ".venv/bin/python -m unittest discover -s tests -v",
     "build": "node scripts/build.mjs",
     "build:web": "node scripts/build.mjs web",

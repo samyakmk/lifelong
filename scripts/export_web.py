@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EXPORT = ROOT / "dist" / "baseline-web.zip"
 ROOT_FILES = (".gitignore", "package.json", "requirements.txt", "README.md")
 SOURCE_DIRS = ("baseline", "docs", "scripts", "tests")
-SOURCE_TYPES = {".py", ".sql", ".html", ".css", ".js", ".mjs", ".png", ".md"}
+SOURCE_TYPES = {".py", ".sql", ".html", ".css", ".js", ".mjs", ".png", ".md", ".json"}
 
 
 def main():

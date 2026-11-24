@@ -1,0 +1,9 @@
+{% extends "staff/base.html" %}
+{% block title %}{{ title }} · Baseline Lab Demo{% endblock %}
+{% block main %}
+<main id="main" class="wrap narrow">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <a class="button" href="{{ url_for('staff.index') }}">Staff queue <span aria-hidden="true">→</span></a>
+</main>
+{% endblock %}
