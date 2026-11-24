@@ -1,0 +1,72 @@
+{% extends "portal/base.html" %}
+{% from "portal/_appointment.html" import visit_details %}
+{% block title %}Book a draw · Baseline Lab Demo{% endblock %}
+{% block main %}
+<main id="main" class="wrap member-page">
+  <a class="text-link back-link" href="{{ url_for('web.member') }}"><span aria-hidden="true">←</span> Back to Home</a>
+  <h1>{{ 'Appointment booked' if appointment and order.status == 'booked' else 'Book a draw' }}</h1>
+  {% if error %}<p class="form-notice" role="alert">{{ error }}</p>{% endif %}
+  {% if appointment %}
+    <div class="portal-book-grid">
+      <section class="member-card member-next" aria-labelledby="booking-state">
+        <p class="eyebrow"><span class="signal-dot"></span> {{ order.status_label }}</p>
+        <h2 id="booking-state">{{ 'Your draw is scheduled' if order.status == 'booked' else 'Your most recent draw' }}</h2>
+        <p>{{ next_step.detail }}</p>
+        <a class="button button-lime" href="{{ url_for('web.member') }}">Back to Home <span aria-hidden="true">→</span></a>
+      </section>
+      <section class="member-card" aria-labelledby="booked-appointment">
+        <h2 id="booked-appointment">{{ 'Draw appointment' if order.status == 'booked' else 'Visit details' }}</h2>
+        {{ visit_details(appointment, order.status == 'booked') }}
+      </section>
+    </div>
+  {% elif order and order.status == 'approved' %}
+    {% if selected_day %}
+      {% set day = days[selected_day] %}
+      <form class="portal-book-grid" method="post" action="{{ url_for('web.portal.book', day=selected_day) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="order_id" value="{{ order.id }}">
+        <section class="member-card portal-calendar" aria-labelledby="available-times">
+          <h2 id="available-times">Available times</h2>
+          <p class="portal-muted">Choose a day and time at {{ center.name }}.</p>
+          <nav class="calendar-days" aria-label="Available dates">
+            {% for key, item in days.items() %}
+              <a href="{{ url_for('web.portal.book', day=key) }}" aria-label="{{ item.date.strftime('%A, %B') }} {{ item.date.day }}" {% if key == selected_day %}aria-current="date"{% endif %}>
+                <span>{{ item.date.strftime('%a') }}</span>
+                <strong>{{ item.date.day }}</strong>
+                <small>{{ item.date.strftime('%b') }}</small>
+              </a>
+            {% endfor %}
+          </nav>
+          <fieldset class="book-slots">
+            <legend>{{ day.date.strftime('%A, %B') }} {{ day.date.day }}</legend>
+            {% for slot in day.slots %}
+              <label class="book-slot">
+                <input type="radio" name="slot_id" value="{{ slot.id }}" required>
+                <span>{{ slot.label }} {{ slot.zone }}</span>
+              </label>
+            {% endfor %}
+          </fieldset>
+        </section>
+        <section class="member-card portal-book-location" aria-labelledby="book-location">
+          <p class="eyebrow">DRAW LOCATION</p>
+          <h2 id="book-location">{{ center.name }}</h2>
+          <p class="portal-muted">{{ center.address }}</p>
+          <button class="button" type="submit">Confirm booking <span aria-hidden="true">→</span></button>
+        </section>
+      </form>
+    {% else %}
+      <section class="member-card portal-empty">
+        <h2>No times available</h2>
+        <p>Check for new slots at {{ center.name }}.</p>
+        <a class="button" href="{{ url_for('web.portal.book') }}">Refresh availability</a>
+      </section>
+    {% endif %}
+  {% else %}
+    <section class="member-card portal-empty">
+      <h2>{{ next_step.title if next_step else 'No order to book' }}</h2>
+      <p>{{ next_step.detail if next_step else 'Your booking options will appear when a lab order is approved.' }}</p>
+      <a class="button" href="{{ url_for('web.member') }}">View order status <span aria-hidden="true">→</span></a>
+    </section>
+  {% endif %}
+</main>
+{% endblock %}

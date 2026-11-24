@@ -8,11 +8,13 @@ from ..accounts import EmailInUse, authenticate_member, create_member, validate_
 from ..catalog import CONSENT_TEXT, INTAKE_QUESTIONS, PLAN, TEST_GROUPS
 from ..db import get_db
 from ..orders import ORDER_STEPS, member_dashboard
+from .portal import portal
 from .security import change_identity, csrf_token, matches_session, valid_form
 
 web = Blueprint(
     "web", __name__, template_folder="templates", static_folder="static", static_url_path="/assets"
 )
+web.register_blueprint(portal)
 
 
 @web.before_request
@@ -40,7 +42,9 @@ def set_headers(response):
     )
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
-    if request.blueprint in {"staff", "api"} or request.endpoint in {"web.join", "web.member", "web.sign_out"}:
+    if request.blueprint in {"staff", "api", "web.portal"} or request.endpoint in {
+        "web.join", "web.member", "web.sign_out"
+    }:
         response.headers["Cache-Control"] = "no-store"
     return response
 

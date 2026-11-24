@@ -2,6 +2,7 @@ import re
 
 from .results import change_summary, measurement_change, reading, source_point
 
+MAX_QUESTION_LENGTH = 500
 SUGGESTIONS = (
     "What changed in my LDL cholesterol since my first test?",
     "What was my latest hemoglobin A1c?",
@@ -28,6 +29,10 @@ CHANGES = re.compile(r"\b(chang(?:e[ds]?|ing)|trend|compare|since|over time|incr
 LATEST = re.compile(r"\b(latest|current|most recent|last|what is|what was|how (?:high|low))\b")
 FIRST_DRAW = re.compile(r"\b(first|initial|baseline)\b")
 MEDICAL_ADVICE = re.compile(r"\b(diagnos\w*|dose|treat\w*|prescri\w*|should i|recommend\w*|cure|medication)\b")
+
+
+def valid_question(question):
+    return isinstance(question, str) and 1 <= len(question.strip()) <= MAX_QUESTION_LENGTH
 
 
 def response(kind, answer, sources=()):

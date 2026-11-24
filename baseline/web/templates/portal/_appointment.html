@@ -1,0 +1,9 @@
+{% macro visit_details(appointment, show_prep) %}
+  <dl class="visit-details">
+    <div><dt>When</dt><dd><time datetime="{{ appointment.starts_at }}">{{ appointment.starts_at | visit_time }}</time></dd></div>
+    <div><dt>Where</dt><dd>{{ appointment.draw_center.name }}<small>{{ appointment.draw_center.address }}</small></dd></div>
+    {% if show_prep %}
+      <div><dt>Before your draw</dt><dd>{{ appointment.prep }}</dd></div>
+    {% endif %}
+  </dl>
+{% endmacro %}

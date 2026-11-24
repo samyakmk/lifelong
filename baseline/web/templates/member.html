@@ -1,44 +1,42 @@
-{% extends "base.html" %}
-{% block title %}My baseline · Baseline Lab Demo{% endblock %}
-{% block navigation %}{% endblock %}
-{% block header_actions %}
-  <form method="post" action="{{ url_for('web.sign_out') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="button button-outline button-small" type="submit">Sign out</button>
-  </form>
-{% endblock %}
+{% extends "portal/base.html" %}
+{% from "portal/_appointment.html" import visit_details %}
+{% block title %}Member home · Baseline Lab Demo{% endblock %}
 {% block main %}
 <main id="main" class="wrap member-page">
-  <p class="eyebrow">MEMBER DASHBOARD</p>
-  <h1>Welcome, <em>{{ g.member.name.split()[0] }}.</em></h1>
+  <h1>Hi, <em>{{ g.member.name.split()[0] }}.</em></h1>
   {% if order %}
     {% set active_index = (order_steps | list).index(order.status) %}
-    <div class="member-grid">
+    <div class="member-grid portal-home">
       <section class="member-card member-next" aria-labelledby="member-next">
         <p class="eyebrow"><span class="signal-dot"></span> {{ order.status_label }}</p>
         <h2 id="member-next">{{ next_step.title }}</h2>
         {% if order.status == 'awaiting_review' %}<p>Your demo order is confirmed.</p>{% endif %}
         <p>{{ next_step.detail }}</p>
+        {% if order.status == 'approved' %}
+          <a class="button button-lime" href="{{ url_for('web.portal.book') }}">Book a draw <span aria-hidden="true">→</span></a>
+        {% elif order.status == 'published' %}
+          <a class="button button-lime" href="{{ url_for('web.portal.results') }}">Open Results <span aria-hidden="true">→</span></a>
+        {% endif %}
       </section>
-      {% if appointment %}
-        <section class="member-card member-receipt member-progress" aria-labelledby="appointment-title">
-          <h2 id="appointment-title">Draw appointment</h2>
+
+      <div class="portal-stack">
+        {% if appointment %}
+          <section class="member-card" aria-labelledby="appointment-title">
+            <h2 id="appointment-title">{{ 'Draw appointment' if order.status == 'booked' else 'Most recent draw' }}</h2>
+            {{ visit_details(appointment, order.status == 'booked') }}
+          </section>
+        {% endif %}
+        <section class="member-card member-receipt" aria-labelledby="receipt-title">
+          <h2 id="receipt-title">Order details</h2>
           <dl>
-            <div><dt>When</dt><dd>{{ appointment.starts_at | visit_time }}</dd></div>
-            <div><dt>Where</dt><dd>{{ appointment.draw_center.name }} · {{ appointment.draw_center.address }}</dd></div>
+            <div><dt>Order</dt><dd>#{{ "%04d" | format(order.id) }}</dd></div>
+            <div><dt>Panel</dt><dd>{{ plan.name if order.kind == 'baseline' else 'Follow-up panel' }}</dd></div>
+            <div><dt>Draw partner</dt><dd>{{ order.draw_center }}</dd></div>
+            <div><dt>Purchase</dt><dd>{{ order.purchase_status | capitalize }} · ${{ "%g" | format(order.amount_cents / 100) }}</dd></div>
           </dl>
-          {% if order.status == 'booked' %}<p class="fine-print appointment-note">{{ appointment.prep }}</p>{% endif %}
         </section>
-      {% endif %}
-      <section class="member-card member-receipt" aria-labelledby="receipt-title">
-        <h2 id="receipt-title">Order details</h2>
-        <dl>
-          <div><dt>Order</dt><dd>#{{ "%04d" | format(order.id) }}</dd></div>
-          <div><dt>Panel</dt><dd>{{ plan.name if order.kind == 'baseline' else 'Follow-up panel' }}</dd></div>
-          <div><dt>Draw partner</dt><dd>{{ order.draw_center }}</dd></div>
-          <div><dt>Purchase</dt><dd>{{ order.purchase_status | capitalize }} · ${{ "%g" | format(order.amount_cents / 100) }}</dd></div>
-        </dl>
-      </section>
+      </div>
+
       <section class="member-card member-progress" aria-labelledby="order-progress">
         <h2 id="order-progress">Order progress</h2>
         <ol class="order-timeline">

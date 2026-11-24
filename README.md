@@ -1,41 +1,55 @@
 # Baseline Lab Demo
 
-A local interview MVP for preventive lab testing. The public site offers one fictional **Baseline Panel** for **$149 one time** at **Alder Draw Center**, a fictional draw partner. Staff fulfillment and the native iOS member app use the shared Flask backend. Use synthetic account and intake details.
+A local interview demo for preventive lab testing. The public website, staff portal, web member portal, and Expo iOS app use one Flask backend and SQLite database.
 
 ## Setup and run
 
-Run from the repository root with Python 3.12 and Node.js with npm. Flask is the only direct Python dependency.
+Run from the repository root with Python 3.12 and Node.js with npm.
 
 ```sh
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+npm --prefix mobile ci
 npm run demo:seed
 npm start
 ```
 
-Open the [public site](http://127.0.0.1:5050/), [member sign-in](http://127.0.0.1:5050/member), or [staff queue](http://127.0.0.1:5050/staff). The server binds to loopback. Use `npm start -- --port 5052` for a second local server. The app uses `instance/baseline.sqlite3` by default. The database and browser session signing key persist across restarts.
+The default server uses `http://127.0.0.1:5050` and stores data in `instance/baseline.sqlite3`. Staff and upcoming weekday draw slots are initialized at startup. The seed creates Casey Harper’s published draws on April 10 and October 16, 2025. Repeating the seed preserves her existing case.
 
 | Demo account | Email | Password |
 | --- | --- | --- |
 | Staff | `staff@example.test` | `BaselineStaffDemo-27!` |
-| Prepared member, Casey Harper | `casey.harper@example.test` | `BaselineCaseyDemo-27!` |
+| Casey Harper | `casey.harper@example.test` | `BaselineCaseyDemo-27!` |
 
-The staff account and upcoming weekday slots are created on startup. Restarting the server or running the seed refreshes the upcoming slots and preserves existing bookings. The separate seed command prepares Casey’s two published draws on April 10 and October 16, 2025. Rerunning the seed preserves the same two orders, appointments, and reports. A new public signup always has its own baseline order at **Awaiting review**.
+### Browser
 
-## Native iOS app
-
-With the seeded backend running, install the Expo project dependencies and open it in the booted simulator:
+Open these Chrome tabs in order. Using `localhost` for Casey keeps her cookie separate from the public signup and staff tabs on `127.0.0.1`. Both hostnames reach the same database.
 
 ```sh
-npm --prefix mobile ci
+open -a "Google Chrome" \
+  http://127.0.0.1:5050/ \
+  http://127.0.0.1:5050/staff \
+  http://localhost:5050/member
+```
+
+Sign into staff and leave its queue open. Sign in as Casey on the third tab and open Results. Leave the first tab at the public offer with its member account signed out.
+
+### iOS Simulator
+
+Boot the iPhone simulator if needed, and start Metro in a separate terminal:
+
+```sh
+xcrun simctl list devices available
+xcrun simctl boot 'iPhone 17 Pro'
+xcrun simctl bootstatus 'iPhone 17 Pro' -b
 npm run ios
 ```
 
-The app uses the same member credentials listed above. [Simulator setup, rehearsal instructions, and screenshots](mobile/README.md)
+If the device is already booted, skip the boot command. Sign in as Casey and open Results before the interview. The member session lasts 24 hours and is stored in SecureStore. For a server started on port 5055, launch Metro with `EXPO_PUBLIC_BASELINE_API_URL=http://127.0.0.1:5055/api/v1 npm run ios` and use port 5055 in the browser URLs too. [Simulator details and screenshots](mobile/README.md)
 
-## Fresh rehearsal database
+### Reset for another rehearsal
 
-Use a separate instance to rehearse signup and fulfillment again.
+Stop your current Flask process, then create and seed a separate database:
 
 ```sh
 mkdir -p instance
@@ -44,32 +58,44 @@ npm run demo:seed
 npm start
 ```
 
-The server prints the database path. To reopen that rehearsal, set `BASELINE_INSTANCE_DIR` to the directory containing the database before running `npm start`. `npm run demo:fresh` starts a separate empty instance for a signup-only run.
+The server prints the database path. Set `BASELINE_INSTANCE_DIR` to the directory containing that database to reopen it later. To keep another loopback instance running, use `npm start -- --port 5055` for the fresh one. Sign in again on each prepared surface after switching databases.
 
-## Verify the staff and member handoff
+## Four-scene interview checklist
 
-1. Sign up through the public site with a new fictional email and password. Open staff and verify the new member appears with **Approve order** as the next action.
-2. Open the case and approve the order. Sign in to the API with the new member’s credentials, list slots, and book one. Reload the staff case and member dashboard to see the same appointment.
-3. In staff, choose **Mark collected** and **Import sample results**. Confirm that staff can open the draft and that the member’s report list, trends, and insights are empty. The member’s chat should say results are pending publication.
-4. Choose **Publish results** and verify the member can fetch the report. Casey’s API account should still show just its own two reports.
-5. Open Casey’s staff case for the interview. Ask the member API “What changed in my LDL cholesterol since my first test?” The sourced answer is a decrease of 38 mg/dL, from 142 on April 10 to 104 on October 16, 2025.
+1. **Public website.** Show the $149 Baseline Panel and Alder Draw Center. Use a new synthetic email, complete intake, and place the simulated order.
+2. **Staff portal.** Refresh the queue and find the new signup at Awaiting review. Open Casey’s case and show the baseline and follow-up orders, appointments, collection dates, and published reports.
+3. **Web member portal.** Switch to Casey’s prepared Results tab. Open Trends and show LDL at **142 mg/dL on April 10, 2025** and **104 mg/dL on October 16, 2025**. Read the LDL insight, then ask **“What changed in my LDL cholesterol since my first test?”** in Chat. Point to the two report sources for the **38 mg/dL decrease**.
+4. **iOS Simulator.** Switch to Casey’s prepared iOS Results. Show the published report, the same trend and insight, and the answer with the same source values and dates.
 
-[API reference and copyable booking and chat commands](docs/member-api.md)
+Finish each scene before switching surfaces. Run the fulfillment walkthrough separately so the interview can use Casey’s finished reports.
+
+## Verification walkthroughs
+
+1. **Browser fulfillment.** Create a fresh member in public signup, approve the order in staff, and use **Book a draw** on the member Home screen. Check the booking confirmation and the staff appointment. Mark collected and import the sample report in staff. Confirm the member Results page says **Reports pending**. Publish in staff, then reload Results and open the saved report.
+2. **Cross-surface parity.** Sign in as Casey on web and iOS and compare her report, LDL trend, insight, and Chat response against the dates and values above. Create a separate synthetic member, approve their order in staff, and book in iOS. Refresh that member’s web Home and booking pages and the staff case to verify the same location and time.
+
+## What is simulated
+
+The Baseline Panel is a fictional $149 offer. Checkout records a simulated purchase. Appointments are local demo slots for Alder Draw Center. Staff actions simulate collection and report publication. The sample fixtures and prepared reports contain synthetic measurements and reference ranges. Guided Chat answers from that member’s published measurements in SQLite.
+
+The seven web pages are `/`, `/join`, `/staff`, `/staff/members/<id>`, `/member`, `/member/book`, and `/member/results`. The four iOS screens are Sign in, Home, Book a draw, and Results.
 
 ## Checks and exports
 
 ```sh
 npm test
+npm --prefix mobile run typecheck
 npm run build
+npm run build:ios
 ```
 
-The tests cover signup, the staff-to-member handoff, retry and slot contention, publication and ownership, token expiry and revocation, and trend and chat evidence. The default website build packages the runnable project and synthetic fixtures in `dist/baseline-web.zip`. `npm run build:web` selects the same target. `npm run build:ios` and `npm run build -- ios` export the iOS JavaScript bundle and assets to `dist/ios`.
+The tests cover signup, booking, publication, CSRF, member ownership, token expiry, and report parity. The default website build packages Flask and the synthetic fixtures in `dist/baseline-web.zip`. The iOS build exports the JavaScript bundle and assets to `dist/ios`.
 
-## Schema and fulfillment handoff
+## Schema and service handoff
 
-- `members`, `intakes`, `consents`, `purchases`, and the baseline order are written together during signup. Each member can have one baseline and multiple follow-up orders. Separate `staff_users` records authorize staff browser sessions, and `member_tokens` stores hashes of expiring, revocable API bearer tokens.
-- `orders` follow `awaiting_review` → `approved` → `booked` → `collected` → `results_imported` → `published`. SQLite rejects skipped or reversed status updates. The fulfillment service writes the appointment, collection timestamp, report draft, or publication timestamp in the same transaction as its corresponding status change.
-- `draw_slots` is the draw center’s availability. `appointments` reserves one slot per order and one order per slot. `reports` holds one report per order and `report_measurements` holds normalized values and reference ranges. Startup migrates phase 1 databases in place, preserving prior records.
-- `baseline/orders.py` and `baseline/fulfillment.py` provide the shared order and booking logic. `baseline/results.py` is the member-scoped source for published reports, trends, insights, and local guided chat. `baseline/api.py` exposes those services under `/api/v1`. The Jinja dashboard and API use the same member dashboard logic.
+- `members`, `intakes`, `consents`, `purchases`, and the baseline order are written together during signup. Each member can have one baseline and multiple follow-up orders. Separate `staff_users` records authorize staff sessions. `member_tokens` stores hashes of expiring, revocable API bearer tokens.
+- Orders follow `awaiting_review` → `approved` → `booked` → `collected` → `results_imported` → `published`. SQLite rejects skipped or reversed status updates. The fulfillment service writes each stage’s appointment, collection timestamp, report draft, or publication timestamp in the same transaction as the status change.
+- `draw_slots` holds draw-center availability. `appointments` reserves one slot per order and one order per slot. `reports` holds one report per order. `report_measurements` stores values, units, and reference ranges. Startup migrates phase 1 databases in place.
+- The web member portal and iOS API use the same dashboard, slot and booking services, published reports, trend and insight calculations, and guided chat. Drafts are visible to staff until publication.
 
-[Funnel research and design decisions](docs/signup-research.md)
+[Member API reference](docs/member-api.md) · [Public funnel research](docs/signup-research.md)

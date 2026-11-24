@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('web.static', filename='portal.css') }}">{% endblock %}
+{% block navigation %}
+  <nav class="portal-nav" aria-label="Member">
+    <a href="{{ url_for('web.member') }}" {% if request.endpoint == 'web.member' %}aria-current="page"{% endif %}>Home</a>
+    <a href="{{ url_for('web.portal.results') }}" {% if request.endpoint == 'web.portal.results' %}aria-current="page"{% endif %}>Results</a>
+  </nav>
+{% endblock %}
+{% block header_actions %}
+  <form method="post" action="{{ url_for('web.sign_out') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="button button-outline button-small" type="submit">Sign out</button>
+  </form>
+{% endblock %}

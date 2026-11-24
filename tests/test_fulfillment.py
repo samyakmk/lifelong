@@ -253,3 +253,84 @@ class FulfillmentTests(unittest.TestCase):
         self.assertEqual(sorted(outcomes), [200, 409])
         with self.app.app_context():
             self.assertEqual(get_db().execute("SELECT COUNT(*) FROM appointments").fetchone()[0], 1)
+
+    def test_browser_booking_and_publication_use_the_shared_fulfillment_records(self):
+        browser, auth, member_id, order_id = self.enroll()
+        self.staff_login()
+        self.action(member_id, order_id, "approve")
+        slots = self.client.get(PREFIX + "/member/slots", headers=auth).json["slots"]
+        booking = browser.get("/member/book")
+        self.assertIn(b"Alder Draw Center", booking.data)
+        self.assertEqual(booking.headers["Cache-Control"], "no-store")
+        form = {"order_id": order_id, "slot_id": slots[0]["id"]}
+        self.assertEqual(browser.post("/member/book", data=form).status_code, 400)
+        form["csrf_token"] = hidden(booking, "csrf_token")
+        booked = browser.post("/member/book", data=form, follow_redirects=True)
+        self.assertIn(b"Appointment booked", booked.data)
+        self.assertIn(b"Before your draw", booked.data)
+        self.assertEqual(browser.post("/member/book", data=form).status_code, 303)
+        appointment = self.client.get(PREFIX + "/member", headers=auth).json["appointment"]
+        self.assertEqual(appointment["starts_at"], slots[0]["starts_at"])
+        self.assertEqual(appointment["slot_id"], slots[0]["id"])
+
+        self.action(member_id, order_id, "collect")
+        self.action(member_id, order_id, "import")
+        pending = browser.get("/member/results")
+        self.assertIn(b"Reports pending", pending.data)
+        self.assertNotIn(b"136 mg/dL", pending.data)
+        self.assertEqual(browser.get("/member/results?draw=1").status_code, 404)
+        self.action(member_id, order_id, "publish")
+        report = browser.get("/member/results?draw=1")
+        self.assertIn(b"Clinician summary", report.data)
+        self.assertIn(b"136 mg/dL", report.data)
+
+    def test_api_booking_appears_on_web_and_other_member_cannot_change_it(self):
+        browser, auth, member_id, order_id = self.enroll()
+        other, _, other_member, other_order = self.enroll("Robin Shaw", "robin@example.test")
+        self.staff_login()
+        self.action(member_id, order_id, "approve")
+        self.action(other_member, other_order, "approve")
+        slot = self.client.get(PREFIX + "/member/slots", headers=auth).json["slots"][0]
+        form = other.get("/member/book")
+        denied = other.post("/member/book", data={
+            "csrf_token": hidden(form, "csrf_token"), "order_id": order_id, "slot_id": slot["id"],
+        })
+        self.assertEqual(denied.status_code, 404)
+        self.assertEqual(self.booking(auth, order_id, slot["id"]).status_code, 200)
+        for path in ("/member", "/member/book"):
+            page = browser.get(path)
+            self.assertIn(slot["starts_at"].encode(), page.data)
+            self.assertIn(b"184 Alder Way", page.data)
+        self.assertNotIn(b"Appointment booked", other.get("/member/book").data)
+
+    def test_web_results_match_the_prepared_member_api_and_require_a_session(self):
+        auth = self.prepared()
+        self.assertEqual(self.client.get("/member/results").location, "/member")
+        browser = self.app.test_client()
+        sign_in = browser.get("/member")
+        browser.post("/member", data={
+            "csrf_token": hidden(sign_in, "csrf_token"),
+            "email": PREPARED_EMAIL, "password": PREPARED_PASSWORD,
+        })
+        report = browser.get("/member/results")
+        self.assertEqual(report.headers["Cache-Control"], "no-store")
+        self.assertIn(b"Follow-up panel", report.data)
+        self.assertIn(b"Oct 16, 2025", report.data)
+        self.assertIn(b"Baseline panel", browser.get("/member/results?draw=1").data)
+        trend = browser.get("/member/results?view=trends")
+        self.assertIn(b'data-date="2025-04-10"', trend.data)
+        self.assertIn(b'data-value="142.0"', trend.data)
+        self.assertIn(b'data-date="2025-10-16"', trend.data)
+        self.assertIn(b'data-value="104.0"', trend.data)
+        self.assertIn(b"Decreased by 38 mg/dL", trend.data)
+        self.assertIn(b"LDL cholesterol decreased by 38 mg/dL", browser.get("/member/results?view=insights").data)
+
+        compose = browser.get("/member/results?view=chat")
+        self.assertEqual(browser.post("/member/results", data={"question": LDL_QUESTION}).status_code, 400)
+        answer = browser.post("/member/results?view=chat", data={
+            "csrf_token": hidden(compose, "csrf_token"), "question": LDL_QUESTION,
+        })
+        api_answer = self.client.post(PREFIX + "/member/chat", headers=auth, json={"question": LDL_QUESTION})
+        self.assertIn(api_answer.json["answer"].encode(), answer.data)
+        self.assertIn(b'href="/member/results?draw=1"', answer.data)
+        self.assertIn(b'href="/member/results?draw=2"', answer.data)

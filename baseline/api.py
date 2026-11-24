@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from flask import Blueprint, g, jsonify, request
 
 from .accounts import authenticate_member
-from .chat import SUGGESTIONS, answer_question
+from .chat import MAX_QUESTION_LENGTH, SUGGESTIONS, answer_question, valid_question
 from .db import get_db
 from .fulfillment import WorkflowError, available_slots, book_slot
 from .orders import member_dashboard
@@ -149,6 +149,6 @@ def suggestions():
 def chat():
     fields = request.get_json(silent=True)
     question = fields.get("question") if isinstance(fields, dict) else None
-    if not isinstance(question, str) or not 1 <= len(question.strip()) <= 500:
-        return api_error("invalid_request", "Enter a question of up to 500 characters.", 400)
+    if not valid_question(question):
+        return api_error("invalid_request", f"Enter a question of up to {MAX_QUESTION_LENGTH} characters.", 400)
     return jsonify(answer_question(published_reports(get_db(), g.api_member["id"]), question))

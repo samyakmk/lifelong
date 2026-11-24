@@ -1,0 +1,29 @@
+{% macro sources(points, chart_data=false, show_marker=false) %}
+  <ul class="result-sources">
+    {% for point in points %}
+      <li{% if chart_data %} data-chart-point data-date="{{ point.collection_date }}" data-label="{{ point.collection_date | draw_label }}" data-value="{{ point.value }}"{% endif %}>
+        <a href="{{ url_for('web.portal.results', draw=point.report_id) }}">
+          <span>
+            {% if show_marker %}<strong>{{ point.name }}</strong>{% endif %}
+            <time datetime="{{ point.collection_date }}">{{ point.collection_date | draw_label }}</time>
+            <small>Report #{{ point.report_id }}</small>
+          </span>
+          <strong>{{ '%g' | format(point.value) }} {{ point.unit }}</strong>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro lab_range(marker) %}
+  {%- if marker.reference_low is not none and marker.reference_high is not none -%}
+    {{ '%g' | format(marker.reference_low) }}–{{ '%g' | format(marker.reference_high) }} {{ marker.unit }}
+  {%- elif marker.reference_low is not none -%}
+    ≥ {{ '%g' | format(marker.reference_low) }} {{ marker.unit }}
+  {%- elif marker.reference_high is not none -%}
+    ≤ {{ '%g' | format(marker.reference_high) }} {{ marker.unit }}
+  {%- else -%}
+    —
+  {%- endif -%}
+{% endmacro %}
