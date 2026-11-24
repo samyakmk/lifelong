@@ -7,6 +7,7 @@
     "demo:fresh": ".venv/bin/python -m baseline --fresh",
     "demo:seed": ".venv/bin/python -m baseline --seed",
     "test": ".venv/bin/python -m unittest discover -s tests -v",
+    "ios": "npm --prefix mobile run ios",
     "build": "node scripts/build.mjs",
     "build:web": "node scripts/build.mjs web",
     "build:ios": "node scripts/build.mjs ios"

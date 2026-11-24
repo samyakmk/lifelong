@@ -1,6 +1,6 @@
 # Baseline Lab Demo
 
-A local interview MVP for preventive lab testing. The public site offers one fictional **Baseline Panel** for **$149 one time** at **Alder Draw Center**, a fictional draw partner. Phase 2 adds staff fulfillment and the shared member API. Use synthetic account and intake details.
+A local interview MVP for preventive lab testing. The public site offers one fictional **Baseline Panel** for **$149 one time** at **Alder Draw Center**, a fictional draw partner. Staff fulfillment and the native iOS member app use the shared Flask backend. Use synthetic account and intake details.
 
 ## Setup and run
 
@@ -21,6 +21,17 @@ Open the [public site](http://127.0.0.1:5050/), [member sign-in](http://127.0.0.
 | Prepared member, Casey Harper | `casey.harper@example.test` | `BaselineCaseyDemo-27!` |
 
 The staff account and upcoming weekday slots are created on startup. Restarting the server or running the seed refreshes the upcoming slots and preserves existing bookings. The separate seed command prepares Casey’s two published draws on April 10 and October 16, 2025. Rerunning the seed preserves the same two orders, appointments, and reports. A new public signup always has its own baseline order at **Awaiting review**.
+
+## Native iOS app
+
+With the seeded backend running, install the Expo project dependencies and open it in the booted simulator:
+
+```sh
+npm --prefix mobile ci
+npm run ios
+```
+
+The app uses the same member credentials listed above. [Simulator setup, rehearsal instructions, and screenshots](mobile/README.md)
 
 ## Fresh rehearsal database
 
@@ -52,7 +63,7 @@ npm test
 npm run build
 ```
 
-The tests cover signup, the staff-to-member handoff, retry and slot contention, publication and ownership, token expiry and revocation, and trend and chat evidence. The default website build packages the runnable project and synthetic fixtures in `dist/baseline-web.zip`. `npm run build:web` selects the same target. `npm run build:ios` and `npm run build -- ios` delegate to `mobile/package.json` once Phase 3 adds the Expo client.
+The tests cover signup, the staff-to-member handoff, retry and slot contention, publication and ownership, token expiry and revocation, and trend and chat evidence. The default website build packages the runnable project and synthetic fixtures in `dist/baseline-web.zip`. `npm run build:web` selects the same target. `npm run build:ios` and `npm run build -- ios` export the iOS JavaScript bundle and assets to `dist/ios`.
 
 ## Schema and fulfillment handoff
 
